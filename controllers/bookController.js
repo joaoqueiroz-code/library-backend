@@ -10,7 +10,14 @@ exports.getBooks = (req, res) => {
 
 exports.createBook = (req, res) => {
     const { title, author } = req.body;
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'User ID not provided' });
+    }
+    if (!title || !author) {
+        return res.status(400).json({ message: 'Title and author are required' });
+    }
 
     db.query(
         'INSERT INTO books (title, author, user_id) VALUES (?, ?, ?)',
