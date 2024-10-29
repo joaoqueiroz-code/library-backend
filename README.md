@@ -14,3 +14,11 @@ Este é o backend para a aplicação de biblioteca, desenvolvido com Node.js e E
 
 2. Entre no diretório do projeto:
    ```bash cd library-backend```
+
+3. Instale as dependências:
+   ```bash npm install```
+
+4. Configure as variáveis de ambiente criando um arquivo .env com as seguintes informações.
+
+## Executando o Projeto
+   ```bash npm run dev```
