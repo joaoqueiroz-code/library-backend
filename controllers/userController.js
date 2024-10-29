@@ -18,18 +18,25 @@ exports.register = (req, res) => {
     );
 };
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
     const { email, password } = req.body;
 
-    db.query('SELECT * FROM users WHERE email = ?', [email], (error, results) => {
-        if (error) return res.status(500).json(error);
-        if (!results.length) return res.status(404).json({ message: 'User not found' });
+    try {
+        const [user] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
-        const user = results[0];
-        const validPass = bcrypt.compareSync(password, user.password);
-        if (!validPass) return res.status(400).json({ message: 'Invalid password' });
+        if (user.length === 0) return res.status(404).json({ message: 'User not found' });
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.header('Authorization', token).json({ token: token, name: user.name });
-    });
+        const validPassword = await bcrypt.compare(password, user[0].password);
+        if (!validPassword) return res.status(401).json({ message: 'Invalid password' });
+
+        // Gera o token JWT
+        const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Armazena o token no banco de dados
+        await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user[0].id]);
+
+        res.json({ token });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
 };
