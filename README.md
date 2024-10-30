@@ -4,7 +4,8 @@ Este é o backend para a aplicação de biblioteca, desenvolvido com Node.js e E
 
 ## Requisitos
 
-- [Node.js](https://nodejs.org/) (versão 14 ou superior)
+- [Node.js](https://nodejs.org/) (versão 20 ou superior)
+- [MySql](https://www.mysql.com/)
 - [npm](https://www.npmjs.com/) (gerenciador de pacotes do Node.js)
 
 ## Instalação
