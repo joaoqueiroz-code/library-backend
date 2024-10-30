@@ -2,20 +2,27 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
     const { email, password } = req.body;
-    console.log(email, password);
-    
-    const hashedPassword = bcrypt.hashSync(password, 10);
 
-    db.query(
-        'INSERT INTO users (email, password) VALUES (?, ?)',
-        [email, hashedPassword],
-        (error, results) => {
-            if (error) return res.status(500).json(error);
-            res.status(201).json({ message: 'User registered successfully' });
+    try {
+        const [existingUser] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (existingUser.length > 0) {
+            return res.status(400).json({ message: 'Email already registered' });
         }
-    );
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const [result] = await db.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashedPassword]);
+        
+        const token = jwt.sign({ id: result.insertId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        await db.query('UPDATE users SET token = ? WHERE id = ?', [token, result.insertId]);
+
+        res.status(201).json({ message: 'User registered successfully', token });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
 };
 
 exports.login = async (req, res) => {
@@ -29,10 +36,8 @@ exports.login = async (req, res) => {
         const validPassword = await bcrypt.compare(password, user[0].password);
         if (!validPassword) return res.status(401).json({ message: 'Invalid password' });
 
-        // Gera o token JWT
         const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // Armazena o token no banco de dados
         await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user[0].id]);
 
         res.json({ token });

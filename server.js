@@ -8,7 +8,6 @@ const bookRoutes = require('./routes/bookRoutes');
 dotenv.config();
 const app = express();
 
-// Configurar o middleware CORS
 app.use(express.json());
 app.use(cors());
 
